@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Servicio de Base de Datos
+  postgres:
+    image: postgres:15-alpine
+    container_name: todo-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: tododb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - todo-network
+
+  # Servicio de la API
+  api:
+    build: .
+    container_name: todo-api
+    restart: always
+    environment:
+      - PORT=5000
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/tododb
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    networks:
+      - todo-network
+    volumes:
+      - ./src:/app/src  # Solo para desarrollo (hot reload)
+
+networks:
+  todo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero de tareas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDEAE3;
+    --card: #F7F5F0;
+    --line: #DAD4C8;
+    --ink: #22262B;
+    --muted: #8B8478;
+    --moss: #3F6B4F;
+    --moss-dark: #2E5039;
+    --rust: #C1502E;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 2.1em;
+    background-position: 0 7.4em;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    padding: 4rem 1.5rem 6rem;
+  }
+
+  .wrap {
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0 0 0.35rem;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 2.6rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.1;
+  }
+
+  form {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 2.5rem;
+  }
+
+  form input[type="text"] {
+    flex: 1;
+    border: none;
+    border-bottom: 2px solid var(--ink);
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.05rem;
+    padding: 0.5rem 0.1rem;
+    color: var(--ink);
+  }
+
+  form input[type="text"]::placeholder { color: var(--muted); }
+  form input[type="text"]:focus { outline: none; border-bottom-color: var(--moss); }
+
+  form button {
+    border: none;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0 1.4rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  form button:hover { background: var(--moss-dark); }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .task {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--moss);
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    box-shadow: 2px 3px 0 rgba(34,38,43,0.05);
+    transition: transform 0.12s ease;
+  }
+
+  .task:hover { transform: translateY(-1px); }
+
+  .task.completed { border-left-color: var(--line); opacity: 0.65; }
+
+  .check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--moss);
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+  }
+
+  .task.completed .check {
+    background: var(--moss);
+    border-color: var(--moss);
+  }
+
+  .check svg { width: 12px; height: 12px; display: none; }
+  .task.completed .check svg { display: block; }
+
+  .body { flex: 1; min-width: 0; }
+
+  .title {
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin: 0 0 0.15rem;
+    word-break: break-word;
+  }
+
+  .task.completed .title { text-decoration: line-through; color: var(--muted); }
+
+  .desc {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 0;
+    word-break: break-word;
+  }
+
+  .remove {
+    border: none;
+    background: none;
+    color: var(--muted);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    flex-shrink: 0;
+  }
+
+  .remove:hover { color: var(--rust); }
+
+  .empty {
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--line);
+  }
+
+  .count {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 2rem;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow" id="today"></p>
+      <h1>Tablero de tareas</h1>
+    </header>
+
+    <form id="task-form">
+      <input type="text" id="title-input" placeholder="Añadir una tarea..." autocomplete="off" required>
+      <button type="submit">Añadir</button>
+    </form>
+
+    <div class="list" id="list"></div>
+    <p class="count" id="count"></p>
+  </div>
+
+<script>
+  const form = document.getElementById('task-form');
+  const input = document.getElementById('title-input');
+  const list = document.getElementById('list');
+  const count = document.getElementById('count');
+
+  document.getElementById('today').textContent = new Date().toLocaleDateString('es-CO', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+
+  async function loadTasks() {
+    const res = await fetch('/api/tasks');
+    const tasks = await res.json();
+    render(tasks);
+  }
+
+  function render(tasks) {
+    list.innerHTML = '';
+    if (tasks.length === 0) {
+      list.innerHTML = '<div class="empty">No hay tareas todavía. Añade la primera arriba.</div>';
+      count.textContent = '';
+      return;
+    }
+    tasks.sort((a, b) => a.completed - b.completed);
+    tasks.forEach(task => {
+      const el = document.createElement('div');
+      el.className = 'task' + (task.completed ? ' completed' : '');
+      el.innerHTML = `
+        <button class="check" aria-label="Marcar completada">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#F7F5F0" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+        <div class="body">
+          <p class="title"></p>
+          <p class="desc"></p>
+        </div>
+        <button class="remove" aria-label="Eliminar">&times;</button>
+      `;
+      el.querySelector('.title').textContent = task.title;
+      el.querySelector('.desc').textContent = task.description || '';
+      el.querySelector('.check').onclick = () => toggleTask(task);
+      el.querySelector('.remove').onclick = () => deleteTask(task.id);
+      list.appendChild(el);
+    });
+    const pending = tasks.filter(t => !t.completed).length;
+    count.textContent = `${pending} pendiente${pending === 1 ? '' : 's'} de ${tasks.length}`;
+  }
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const title = input.value.trim();
+    if (!title) return;
+    await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title })
+    });
+    input.value = '';
+    loadTasks();
+  };
+
+  async function toggleTask(task) {
+    await fetch(`/api/tasks/${task.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: !task.completed })
+    });
+    loadTasks();
+  }
+
+  async function deleteTask(id) {
+    await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+    loadTasks();
+  }
+
+  loadTasks();
+</script>
+</body>
+</html>
