@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
@@ -30,7 +30,7 @@ class Task(db.Model):
 
 @app.route('/')
 def home():
-    return jsonify({'message': 'API de Tareas funcionando'})
+    return redirect('/app')
 
 
 @app.route('/app')
